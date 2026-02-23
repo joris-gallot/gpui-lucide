@@ -86,7 +86,7 @@ impl IconSize {
 ///
 /// // With rotation
 /// let icon = Icon::new(IconName::ChevronRight)
-///     .rotate(std::f32::consts::FRAC_PI_2); // 90 degrees
+///     .rotate(gpui::radians(std::f32::consts::FRAC_PI_2)); // 90 degrees
 /// ```
 #[derive(IntoElement)]
 pub struct Icon {
@@ -206,5 +206,77 @@ impl From<Icon> for AnyElement {
 impl From<crate::IconName> for Icon {
     fn from(name: crate::IconName) -> Self {
         Icon::new(name)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gpui::rgb;
+
+    #[derive(Clone, Copy)]
+    enum TestIcon {
+        Sample,
+    }
+
+    impl IconNamed for TestIcon {
+        fn path(&self) -> &'static str {
+            match self {
+                Self::Sample => "icons/sample.svg",
+            }
+        }
+    }
+
+    #[test]
+    fn test_icon_size_to_rems() {
+        assert_eq!(IconSize::XSmall.to_rems(), 0.75);
+        assert_eq!(IconSize::Small.to_rems(), 0.875);
+        assert_eq!(IconSize::Medium.to_rems(), 1.0);
+        assert_eq!(IconSize::Large.to_rems(), 1.5);
+        assert_eq!(IconSize::XLarge.to_rems(), 2.0);
+    }
+
+    #[test]
+    fn test_new_uses_icon_named_path() {
+        let icon = Icon::new(TestIcon::Sample);
+        assert_eq!(icon.path.as_ref(), "icons/sample.svg");
+    }
+
+    #[test]
+    fn test_from_path_sets_custom_path() {
+        let icon = Icon::from_path("custom-icons/logo.svg");
+        assert_eq!(icon.path.as_ref(), "custom-icons/logo.svg");
+    }
+
+    #[test]
+    fn test_with_size_sets_size() {
+        let icon = Icon::default().with_size(IconSize::Large);
+        assert_eq!(icon.size, Some(IconSize::Large));
+    }
+
+    #[test]
+    fn test_color_sets_color() {
+        let icon = Icon::default().color(rgb(0xff0000));
+        assert!(icon.color.is_some());
+    }
+
+    #[test]
+    fn test_from_icon_name_uses_generated_path() {
+        let icon: Icon = crate::IconName::Heart.into();
+        assert_eq!(icon.path.as_ref(), "icons/heart.svg");
+    }
+
+    #[test]
+    fn test_clone_keeps_configuration() {
+        let icon = Icon::from_path("icons/sample.svg")
+            .color(rgb(0xff0000))
+            .with_size(IconSize::Small)
+            .rotate(gpui::radians(std::f32::consts::FRAC_PI_2));
+
+        let cloned = icon.clone();
+
+        assert_eq!(cloned.path.as_ref(), "icons/sample.svg");
+        assert!(cloned.color.is_some());
+        assert_eq!(cloned.size, Some(IconSize::Small));
     }
 }

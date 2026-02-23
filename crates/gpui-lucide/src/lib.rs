@@ -54,10 +54,13 @@ include!(concat!(env!("OUT_DIR"), "/icons_generated.rs"));
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashSet;
+    use std::ffi::OsStr;
+    use std::fs;
+    use std::path::Path;
 
     #[test]
     fn test_icon_name_path() {
-        // Test that paths are generated correctly
         let path = IconName::Heart.path();
         assert!(path.starts_with("icons/"));
         assert!(path.ends_with(".svg"));
@@ -66,12 +69,11 @@ mod tests {
     #[test]
     fn test_icon_name_display() {
         let name = IconName::Heart;
-        assert_eq!(name.name(), "heart");
+        assert_eq!(name.to_string(), "heart");
     }
 
     #[test]
     fn test_icon_count() {
-        // We should have many icons
         assert!(IconName::count() > 1000);
     }
 
@@ -79,5 +81,44 @@ mod tests {
     fn test_all_icons_iterator() {
         let count = IconName::all().count();
         assert_eq!(count, IconName::count());
+    }
+
+    #[test]
+    fn test_icon_count_matches_icons_directory() {
+        let icons_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../icons");
+        let svg_count = fs::read_dir(&icons_dir)
+            .expect("icons directory should be readable")
+            .filter_map(Result::ok)
+            .filter(|entry| entry.path().extension() == Some(OsStr::new("svg")))
+            .count();
+
+        assert_eq!(IconName::count(), svg_count);
+    }
+
+    #[test]
+    fn test_all_icon_name_path_mappings() {
+        for icon in IconName::all() {
+            let expected = format!("icons/{}.svg", icon.name());
+            assert_eq!(icon.path(), expected.as_str());
+        }
+    }
+
+    #[test]
+    fn test_names_and_paths_are_unique() {
+        let mut names = HashSet::new();
+        let mut paths = HashSet::new();
+
+        for icon in IconName::all() {
+            assert!(
+                names.insert(icon.name()),
+                "duplicate icon name: {}",
+                icon.name()
+            );
+            assert!(
+                paths.insert(icon.path()),
+                "duplicate icon path: {}",
+                icon.path()
+            );
+        }
     }
 }
