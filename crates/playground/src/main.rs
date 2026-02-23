@@ -497,7 +497,7 @@ impl Playground {
         let items_per_row = items_per_row.max(1);
 
         const ROW_HEIGHT: f32 = CARD_SIZE + GAP;
-        let num_rows = (count + items_per_row - 1) / items_per_row;
+        let num_rows = count.div_ceil(items_per_row);
 
         div().flex_1().flex().flex_col().overflow_hidden().child(
             uniform_list(
