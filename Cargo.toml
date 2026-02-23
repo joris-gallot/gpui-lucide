@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/yourusername/gpui-lucide"
+
+[workspace.dependencies]
+gpui = { git = "https://github.com/zed-industries/zed" }
+gpui_platform = { git = "https://github.com/zed-industries/zed", features = [
+  "font-kit",
+  "x11",
+  "wayland",
+  "runtime_shaders",
+] }
+gpui_macros = { git = "https://github.com/zed-industries/zed" }
+core-text = "=21.0.0"

@@ -1,0 +1,18 @@
+[package]
+name = "playground"
+description = "Playground app for gpui-lucide icons"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+gpui.workspace = true
+gpui_platform.workspace = true
+gpui_macros.workspace = true
+core-text.workspace = true
+gpui-lucide = { path = "../gpui-lucide" }
+anyhow = "1.0"
+
+[[bin]]
+name = "playground"
+path = "src/main.rs"
