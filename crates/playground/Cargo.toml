@@ -8,7 +8,6 @@ license.workspace = true
 [dependencies]
 gpui.workspace = true
 gpui_platform.workspace = true
-gpui_macros.workspace = true
 core-text.workspace = true
 gpui-lucide = { path = "../gpui-lucide" }
 anyhow = "1.0"
