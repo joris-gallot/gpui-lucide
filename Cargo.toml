@@ -4,6 +4,7 @@ members = ["crates/*"]
 
 [workspace.package]
 version = "0.1.0"
+description = "Lucide icons for GPUI."
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/yourusername/gpui-lucide"
