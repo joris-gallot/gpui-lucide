@@ -78,31 +78,55 @@ impl AssetSource for Assets {
 mod theme {
   use gpui::{Hsla, rgb};
 
-  pub fn bg() -> Hsla {
-    rgb(0x000000).into()
+  pub fn bg(is_dark: bool) -> Hsla {
+    if is_dark {
+      rgb(0x000000).into()
+    } else {
+      rgb(0xffffff).into()
+    }
   }
 
-  pub fn bg_secondary() -> Hsla {
-    rgb(0x0b0b0b).into()
+  pub fn bg_secondary(is_dark: bool) -> Hsla {
+    if is_dark {
+      rgb(0x0b0b0b).into()
+    } else {
+      rgb(0xf5f5f5).into()
+    }
   }
 
-  pub fn bg_hover() -> Hsla {
-    rgb(0x171717).into()
+  pub fn bg_hover(is_dark: bool) -> Hsla {
+    if is_dark {
+      rgb(0x171717).into()
+    } else {
+      rgb(0xe9e9e9).into()
+    }
   }
 
-  pub fn border() -> Hsla {
-    rgb(0x202020).into()
+  pub fn border(is_dark: bool) -> Hsla {
+    if is_dark {
+      rgb(0x202020).into()
+    } else {
+      rgb(0xd9d9d9).into()
+    }
   }
 
-  pub fn text() -> Hsla {
-    rgb(0xe8e8e8).into()
+  pub fn text(is_dark: bool) -> Hsla {
+    if is_dark {
+      rgb(0xe8e8e8).into()
+    } else {
+      rgb(0x111111).into()
+    }
   }
 
-  pub fn text_muted() -> Hsla {
-    rgb(0x8b8b8b).into()
+  pub fn text_muted(is_dark: bool) -> Hsla {
+    if is_dark {
+      rgb(0x8b8b8b).into()
+    } else {
+      rgb(0x666666).into()
+    }
   }
 
-  pub fn accent() -> Hsla {
+  pub fn accent(_is_dark: bool) -> Hsla {
     rgb(0xe94560).into()
   }
 }
@@ -122,6 +146,7 @@ struct Playground {
   focus_handle: FocusHandle,
   search_input: Entity<SearchInput>,
   _search_subscription: Subscription,
+  is_dark: bool,
   selected_color: u32,
   selected_size: IconSize,
   rotation_degrees: f32,
@@ -141,6 +166,14 @@ fn filter_icons(query: &str) -> Vec<IconName> {
 }
 
 impl Playground {
+  fn icon_render_color(&self) -> gpui::Rgba {
+    if self.is_dark {
+      rgb(self.selected_color)
+    } else {
+      rgb(0x000000)
+    }
+  }
+
   fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
     let focus_handle = cx.focus_handle();
     let search_input = cx.new(SearchInput::new);
@@ -161,6 +194,7 @@ impl Playground {
       focus_handle,
       search_input,
       _search_subscription: search_subscription,
+      is_dark: true,
       selected_color: 0xffffff,
       selected_size: IconSize::Large,
       rotation_degrees: 0.0,
@@ -190,6 +224,11 @@ impl Playground {
     self.hovered_icon = icon;
     cx.notify();
   }
+
+  fn toggle_theme(&mut self, cx: &mut Context<Self>) {
+    self.is_dark = !self.is_dark;
+    cx.notify();
+  }
 }
 
 impl Focusable for Playground {
@@ -200,8 +239,9 @@ impl Focusable for Playground {
 
 impl Render for Playground {
   fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-    let icon_color = rgb(self.selected_color);
+    let icon_color = self.icon_render_color();
     let rotation_rad = self.rotation_degrees.to_radians();
+    let is_dark = self.is_dark;
 
     let viewport_width: f32 = window.viewport_size().width.into();
     let sidebar_width = 300.0;
@@ -213,8 +253,8 @@ impl Render for Playground {
       .track_focus(&self.focus_handle)
       .size_full()
       .flex()
-      .bg(theme::bg())
-      .text_color(theme::text())
+      .bg(theme::bg(is_dark))
+      .text_color(theme::text(is_dark))
       .font_family("Inter, system-ui, sans-serif")
       .child(
         div()
@@ -229,17 +269,20 @@ impl Render for Playground {
 
 impl Playground {
   fn render_sidebar(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+    let is_dark = self.is_dark;
+
     div()
       .w(px(300.0))
       .h_full()
       .flex_shrink_0()
       .flex()
       .flex_col()
-      .bg(theme::bg_secondary())
+      .bg(theme::bg_secondary(is_dark))
       .border_r_1()
-      .border_color(theme::border())
+      .border_color(theme::border(is_dark))
       .p_4()
       .gap_6()
+      .child(self.render_theme_toggle(cx))
       // Color picker
       .child(
         div()
@@ -299,7 +342,40 @@ impl Playground {
       )
   }
 
+  fn render_theme_toggle(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+    let is_dark = self.is_dark;
+
+    div()
+      .size_9()
+      .flex()
+      .rounded_full()
+      .cursor_pointer()
+      .items_center()
+      .justify_center()
+      .border_1()
+      .border_color(theme::border(is_dark))
+      .bg(theme::bg(is_dark))
+      .hover(move |s| s.bg(theme::bg_hover(is_dark)))
+      .on_mouse_up(
+        MouseButton::Left,
+        cx.listener(|this, _, _, cx| {
+          this.toggle_theme(cx);
+        }),
+      )
+      .child(
+        Icon::new(if is_dark {
+          IconName::Sun
+        } else {
+          IconName::Moon
+        })
+        .color(theme::text(is_dark))
+        .with_size(IconSize::Medium),
+      )
+  }
+
   fn render_search_input(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+    let is_dark = self.is_dark;
+
     div()
       .flex()
       .items_center()
@@ -307,9 +383,9 @@ impl Playground {
       .px_3()
       .py_2()
       .rounded_md()
-      .bg(theme::bg_secondary())
+      .bg(theme::bg_secondary(is_dark))
       .border_1()
-      .border_color(theme::border())
+      .border_color(theme::border(is_dark))
       .on_mouse_down(
         MouseButton::Left,
         cx.listener(|this, _, window, cx| {
@@ -319,7 +395,7 @@ impl Playground {
       )
       .child(
         Icon::new(IconName::Search)
-          .color(theme::text_muted())
+          .color(theme::text_muted(is_dark))
           .with_size(IconSize::Small),
       )
       .child(div().flex_1().child(self.search_input.clone()))
@@ -327,6 +403,7 @@ impl Playground {
 
   fn render_color_picker(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
     let selected = self.selected_color;
+    let is_dark = self.is_dark;
 
     div()
       .flex()
@@ -344,7 +421,7 @@ impl Playground {
           .bg(rgb(color_val))
           .border_2()
           .border_color(if is_selected {
-            theme::text()
+            theme::text(is_dark)
           } else {
             Hsla::transparent_black()
           })
@@ -364,6 +441,7 @@ impl Playground {
       (IconSize::XLarge, "XL"),
     ];
     let selected = self.selected_size;
+    let is_dark = self.is_dark;
 
     div()
       .flex()
@@ -379,16 +457,16 @@ impl Playground {
           .rounded_md()
           .cursor_pointer()
           .bg(if is_selected {
-            theme::accent()
+            theme::accent(is_dark)
           } else {
-            theme::bg()
+            theme::bg(is_dark)
           })
           .text_sm()
           .hover(|s| {
             s.bg(if is_selected {
-              theme::accent()
+              theme::accent(is_dark)
             } else {
-              theme::bg_hover()
+              theme::bg_hover(is_dark)
             })
           })
           .on_click(cx.listener(move |this, _, _, cx| {
@@ -401,6 +479,7 @@ impl Playground {
   fn render_rotation_picker(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
     let rotations = [0.0, 45.0, 90.0, 180.0, 270.0];
     let selected = self.rotation_degrees;
+    let is_dark = self.is_dark;
 
     div().flex().gap_2().children(rotations.iter().map(|deg| {
       let is_selected = (*deg - selected).abs() < 0.1;
@@ -413,16 +492,16 @@ impl Playground {
         .rounded_md()
         .cursor_pointer()
         .bg(if is_selected {
-          theme::accent()
+          theme::accent(is_dark)
         } else {
-          theme::bg()
+          theme::bg(is_dark)
         })
         .text_sm()
         .hover(|s| {
           s.bg(if is_selected {
-            theme::accent()
+            theme::accent(is_dark)
           } else {
-            theme::bg_hover()
+            theme::bg_hover(is_dark)
           })
         })
         .on_click(cx.listener(move |this, _, _, cx| {
@@ -434,8 +513,9 @@ impl Playground {
 
   fn render_preview(&self, _cx: &mut Context<Self>) -> impl IntoElement {
     let icon = self.hovered_icon.unwrap_or(IconName::Heart);
-    let color = rgb(self.selected_color);
+    let color = self.icon_render_color();
     let rotation = radians(self.rotation_degrees.to_radians());
+    let is_dark = self.is_dark;
 
     div()
       .flex_1()
@@ -446,18 +526,17 @@ impl Playground {
       .gap_4()
       .p_4()
       .rounded_lg()
-      .bg(theme::bg())
+      .bg(theme::bg(is_dark))
       .child(
         Icon::new(icon)
           .color(color)
           .with_size(IconSize::XLarge)
-          .rotate(rotation)
-          .size_24(),
+          .rotate(rotation),
       )
       .child(
         div()
           .text_sm()
-          .text_color(theme::text_muted())
+          .text_color(theme::text_muted(is_dark))
           .child(icon.name()),
       )
   }
@@ -472,6 +551,7 @@ impl Playground {
     let count = self.filtered_icons.len();
     let selected_size = self.selected_size;
     let color_hsla: Hsla = color.into();
+    let is_dark = self.is_dark;
 
     const CARD_SIZE: f32 = 72.0;
     const GAP: f32 = 8.0;
@@ -498,12 +578,12 @@ impl Playground {
           .items_center()
           .gap_3()
           .border_b_1()
-          .border_color(theme::border())
+          .border_color(theme::border(is_dark))
           .child(div().flex_1().child(self.render_search_input(cx)))
           .child(
             div()
               .text_sm()
-              .text_color(theme::text_muted())
+              .text_color(theme::text_muted(is_dark))
               .child(format!("{} icons", count)),
           ),
       )
@@ -544,8 +624,8 @@ impl Playground {
                         .gap_1()
                         .rounded_lg()
                         .cursor_pointer()
-                        .bg(theme::bg_secondary())
-                        .hover(|s| s.bg(theme::bg_hover()))
+                        .bg(theme::bg_secondary(is_dark))
+                        .hover(|s| s.bg(theme::bg_hover(is_dark)))
                         .on_hover(cx.listener(move |this, is_hovered, _, cx| {
                           if *is_hovered {
                             this.set_hovered(Some(icon), cx);
@@ -562,7 +642,7 @@ impl Playground {
                         .child(
                           div()
                             .text_xs()
-                            .text_color(theme::text_muted())
+                            .text_color(theme::text_muted(is_dark))
                             .overflow_hidden()
                             .max_w_full()
                             .truncate()
