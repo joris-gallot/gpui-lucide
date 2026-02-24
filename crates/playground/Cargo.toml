@@ -11,6 +11,7 @@ gpui_platform.workspace = true
 core-text.workspace = true
 gpui-lucide = { path = "../gpui-lucide" }
 anyhow = "1.0"
+unicode-segmentation = "1.12"
 
 [[bin]]
 name = "playground"
