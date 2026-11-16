@@ -10,7 +10,7 @@ gpui.workspace = true
 gpui_platform.workspace = true
 core-text.workspace = true
 gpui-lucide = { path = "../gpui-lucide" }
-anyhow = "1.0"
+anyhow = "1.0.104"
 unicode-segmentation = "1.12"
 
 [[bin]]
